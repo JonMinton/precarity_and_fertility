@@ -1,0 +1,31 @@
+value,label,simple_label
+-9,Missing HH information ,NA
+0,Undefined      ,NA
+2,Lawful spouse  ,partner
+3,Live-in partner,partner
+4,Natural child  ,birth_child
+5,Adopted child  ,child
+6,Foster child   ,child
+7,Step/partner's-child   ,child
+9,Daughter/son-in-law    ,child
+10,Natural brother/sister ,sibling
+11,Other brother/sister   ,sibling
+12,Brother/sister-in-law  ,in_law
+13,Natural parent ,parent
+14,Other parent   ,parent
+15,Mother/father-in-law   ,in_law
+16,Any grand parent       ,relative
+17,Any grand child,relative
+18,Any cousin     ,relative
+19,Any aunt/uncle ,relative
+20,Any nephew/niece       ,relative
+21,Any other relative     ,relative
+22,Employee       ,non_relative
+23,Lodger/border  ,non_relative
+24,Unrelated sharer       ,non_relative
+25,Step parent    ,non_relative
+26,Employer       ,non_relative
+27,Landlady/lord  ,non_relative
+28,Half-sibling   ,relative
+29,Other child    ,child
+30,Other  ,NA
