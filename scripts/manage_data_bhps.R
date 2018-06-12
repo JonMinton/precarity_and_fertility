@@ -115,9 +115,131 @@ all_egoalts <- map(
 
 # First challenge: for each woman, how many alters by wave? 
 
-all_females_in_bhps %>% 
-  
+all_females_in_bhps %>%  
+  mutate(alter_df = map2(PID, wave, ~ all_egoalts %>% filter(PID == .x, wave == .y))) %>% 
+  mutate(n_alters = map_int(alter_df, nrow)) -> females_with_alters
 
+# Then work out if alter includes a natural child 
+
+females_with_alters %>% 
+  mutate(n_children = map_int(alter_df, ~ length(which(.x$REL == 4)))) -> females_with_alters 
+
+
+# Save this 
+
+write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
+
+
+# Now to show number of children by wave and age 
+
+females_with_alters %>% 
+  select(wave, age = AGE, n_children) %>% 
+  group_by(wave, age) %>% 
+  summarise(mean_children = mean(n_children)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = mean_children)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
+  coord_fixed()
+
+
+# Now, similarly, let's work out the proportion of females living with at 
+# least one parent by age 
+
+females_with_alters %>% 
+  mutate(n_parents = map_int(alter_df, ~ length(which(.x$REL == 13)))) %>% 
+  mutate(live_with_parents = n_parents > 0) -> females_with_alters 
+
+
+# Now to visualise this 
+
+females_with_alters %>% 
+  select(wave, age = AGE, live_with_parents) %>% 
+  group_by(wave, age) %>% 
+  summarise(mean_with_parents = mean(live_with_parents)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = mean_with_parents)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
+  coord_fixed()
+
+# Issue with age missing? 
+
+# females_with_alters %>% 
+#   xtabs(~ wave + AGE, .)
+
+females_with_alters %>% 
+  mutate(AGE = ifelse(AGE == -9, NA, AGE)) -> females_with_alters
+
+females_with_alters %>% 
+  select(wave, age = AGE, live_with_parents) %>% 
+  group_by(wave, age) %>% 
+  summarise(mean_with_parents = mean(live_with_parents)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = mean_with_parents)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
+  coord_fixed()
+
+
+# Now, live with partner
+
+females_with_alters %>% 
+  mutate(
+    live_with_partner = map_int(alter_df, ~ length(which(.x$REL == 3)) > 0),
+    live_with_spouse  = map_int(alter_df, ~ length(which(.x$REL == 2)) > 0)
+         ) -> females_with_alters
+
+
+females_with_alters %>% 
+  select(wave, age = AGE, live_with_spouse) %>% 
+  group_by(wave, age) %>% 
+  summarise(mean_with_spouse = mean(live_with_spouse)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = mean_with_spouse)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
+  coord_fixed()
+
+
+females_with_alters %>% 
+  select(wave, age = AGE, live_with_partner) %>% 
+  group_by(wave, age) %>% 
+  summarise(mean_with_partner = mean(live_with_partner)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = mean_with_partner)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
+  coord_fixed()
+
+
+write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
+
+
+# now to flag a woman as having at least one baby 
+
+females_with_alters %>% 
+  group_by(PID) %>% 
+  arrange(wave) %>% 
+  mutate(n_children_last = lag(n_children)) %>% 
+  select(PID, wave, age = AGE, n_children, n_children_last) %>% 
+  ungroup() %>% 
+  mutate(n_new_child = n_children - n_children_last) %>% 
+  mutate(childless = n_children == 0) %>% 
+  group_by(wave, age) %>% 
+  summarise(prop_childless = mean(childless)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = prop_childless)) +
+  geom_tile() + coord_fixed()
+
+# Other variables are needed.
+
+
+
+
+
+####################################################################
+####################################################################
 
 # Lookups  
 rel_lookup <- read_csv("data/lookups/egoalt_rel.csv")
