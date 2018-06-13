@@ -3,5 +3,7 @@
 
 pacman::p_load(
   tidyverse,
-  stringr
+  stringr,
+  survival,
+  survminer
 )
