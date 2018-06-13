@@ -23,11 +23,72 @@ all_inds <- map(
 search_patterns <- c(
   "^PID$",
   "^[A-Z]{1}SEX",
-  "^[A-Z]{1}AGE$"
+  "^[A-Z]{1}AGE$",
+  "^[A-Z]HHTYPE", #household type 
+  "^[A-Z]TENURE" # housing tenure
 ) %>% paste( collapse = "|")
 
 
+# Pos. = 629	Variable = AHHTYPE	Variable label = Household Type  
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for AHHTYPE
+# Value = -9	Label = Missing
+# Value = 1	Label = Single Non-Elderly
+# Value = 2	Label = Single Elderly
+# Value = 3	Label = Couple No Children
+# Value = 4	Label = Couple: dep children
+# Value = 5	Label = Couple: non-dep children
+# Value = 6	Label = Lone par: dep children
+# Value = 7	Label = Lone par: non-dep children
+# Value = 8	Label = 2+ Unrelated adults
+# Value = 9	Label = Other Households
 
+
+# Pos. = 630	Variable = ATENURE	Variable label = Housing tenure  
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for ATENURE
+# Value = -9	Label = Missing
+# Value = 1	Label = Owned Outright
+# Value = 2	Label = Owned with Mortgage
+# Value = 3	Label = Local Authority rented
+# Value = 4	Label = Housing Assoc. rented
+# Value = 5	Label = Rented from Employer
+# Value = 6	Label = Rented private unfurnished
+# Value = 7	Label = Rented private furnished
+# Value = 8	Label = Other rented
+
+# Pos. = 680	Variable = ANJBSP	Variable label = No. employment spells: year to Sept 1   
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for ANJBSP
+# Value = -9	Label = Missing or wild
+# Value = -8	Label = Inapplicable
+# Value = -7	Label = Proxy respondent
+# Value = 0	Label = None
+# 
+# Pos. = 681	Variable = ANJUSP	Variable label = No. unemployment spells: year to Sept 1 
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for ANJUSP
+# Value = -9	Label = Missing or wild
+# Value = -8	Label = Inapplicable
+# Value = -7	Label = Proxy respondent
+# Value = 0	Label = None
+# 
+# Pos. = 682	Variable = ANJISP	Variable label = No. inactive spells: year to Sept 1 
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for ANJISP
+# Value = -9	Label = Missing or wild
+# Value = -8	Label = Inapplicable
+# Value = -7	Label = Proxy respondent
+# Value = 0	Label = None
+
+
+# Pos. = 714	Variable = ASPJB	Variable label = Whether spouse/partner employed now 
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for ASPJB
+# Value = -9	Label = Missing or wild
+# Value = -8	Label = No spouse/partner
+# Value = 0	Label = No
+# Value = 1	Label = Yes
 
 fn <- function(x){
   nms <- names(x)
@@ -41,7 +102,7 @@ fn <- function(x){
   tmp <- names(out)
   WAVE <- tmp[str_detect(tmp, pattern = "^[A-Z]{1}SEX")]  %>% str_replace(., "SEX", "")
   PID <- out$PID
-  out <- out %>% select_(quote(-PID))
+  out$PID <- NULL
   names(out) <- names(out) %>% str_replace_all("^[A-Z]{1}", "")
   out <- data.frame(PID = PID, WAVE = WAVE, out)
   return(out)
@@ -67,69 +128,231 @@ rm(all_inds_ss)
 rm(all_inds)
 
 
-# To do : replace wave with number 
+# DONE : ADD LOOKUP codes (See above) for hhtype, tenure, etc
+# DONE : add wave as number 
+
 tmp <- 1:20
 names(tmp) <- LETTERS[1:20]
 all_females_in_bhps %>% 
   mutate(wave = tmp[WAVE]) %>% 
-  select(PID, wave, sex, AGE) -> all_females_in_bhps
+  mutate(    
+    hhtype = car::recode(
+      HHTYPE, 
+      "
+        -9 = NA;
+        1 = 'Single Non-Elderly';
+        2 = 'Single Elderly';
+        3 = 'Couple No children';
+        4 = 'Couple dep children';
+        5 = 'Couple non-dep children';
+        6 = 'Lone parent - dep children';
+        7 = 'Lone parent - non-dep children';
+        8 = '2+ Unrelated adults';
+        9 = 'Other households'
+        
+      
+      "
+    ),
+    tenure = car::recode(
+      TENURE,
+      "
+    -9	= NA;
+    1	= 'Owned Outright';
+    2	= 'Owned with Mortgage';
+    3	= 'Local Authority rented';
+    4	= 'Housing Assoc. rented';
+    5	= 'Rented from Employer';
+    6	= 'Rented private unfurnished';
+    7	= 'Rented private furnished';
+    8 = 'Other rented'
+      "
+      
+    )
+  ) -> all_females_in_bhps
+    
+
+write_rds(all_females_in_bhps, path = "data/all_females_in_bhps.rData")
+
+    # Pos. = 630	Variable = ATENURE	Variable label = Housing tenure  
+    # This variable is  numeric, the SPSS measurement level is nominal.
+    # Value label information for ATENURE
+    # Value = -9	Label = Missing
+    # Value = 1	Label = Owned Outright
+    # Value = 2	Label = Owned with Mortgage
+    # Value = 3	Label = Local Authority rented
+    # Value = 4	Label = Housing Assoc. rented
+    # Value = 5	Label = Rented from Employer
+    # Value = 6	Label = Rented private unfurnished
+    # Value = 7	Label = Rented private furnished
+    # Value = 8	Label = Other rented
 
 
-
-# Extract relationship table  ---------------------------------------------
-
-# Data - egoalt files -----------------------------------------------------
-
-
-dta_path <- "E:/data/bhps/unzipped/ukda-5151-tab/tab/"
-dta_files <- list.files(path = dta_path, pattern = "egoalt\\.tab")
-
-all_egoalts <- map(
-  paste0(dta_path, dta_files),
-  read_delim,
-  delim = "\t"
-) 
-
-change_to_long <- function(DTA){
-  pid <- DTA$PID
-  DTA$PID <- NULL
-  nms <- names(DTA)
-  nm1 <- nms[1]
-  wave <- str_sub(nm1, 0, 1)
-  wave_num <- which(LETTERS[1:26] == wave)
-  nms <- str_replace(nms, wave, "")
-  names(DTA) <- nms
-  DTA %>% 
-    mutate(wave = wave_num) %>% 
-    mutate(PID = pid) %>% 
-    select(PID, wave, everything())-> DTA
-  DTA
-}
-
-all_egoalts <- map(
-  all_egoalts,
-  change_to_long
-) %>% 
-  bind_rows() 
+# Pos. = 629	Variable = AHHTYPE	Variable label = Household Type  
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for AHHTYPE
+# Value = -9	Label = Missing
+# Value = 1	Label = Single Non-Elderly
+# Value = 2	Label = Single Elderly
+# Value = 3	Label = Couple No Children
+# Value = 4	Label = Couple: dep children
+# Value = 5	Label = Couple: non-dep children
+# Value = 6	Label = Lone par: dep children
+# Value = 7	Label = Lone par: non-dep children
+# Value = 8	Label = 2+ Unrelated adults
+# Value = 9	Label = Other Households
 
 
-# First challenge: for each woman, how many alters by wave? 
+# Pos. = 630	Variable = ATENURE	Variable label = Housing tenure  
+# This variable is  numeric, the SPSS measurement level is nominal.
+# Value label information for ATENURE
+# Value = -9	Label = Missing
+# Value = 1	Label = Owned Outright
+# Value = 2	Label = Owned with Mortgage
+# Value = 3	Label = Local Authority rented
+# Value = 4	Label = Housing Assoc. rented
+# Value = 5	Label = Rented from Employer
+# Value = 6	Label = Rented private unfurnished
+# Value = 7	Label = Rented private furnished
+# Value = 8	Label = Other rented
 
-all_females_in_bhps %>%  
-  mutate(alter_df = map2(PID, wave, ~ all_egoalts %>% filter(PID == .x, wave == .y))) %>% 
-  mutate(n_alters = map_int(alter_df, nrow)) -> females_with_alters
 
-# Then work out if alter includes a natural child 
+# Analyses  ---------------------------------------------------------------
 
-females_with_alters %>% 
-  mutate(n_children = map_int(alter_df, ~ length(which(.x$REL == 4)))) -> females_with_alters 
+# 1) Find people who were couple no children at wave 1, 
+# 2) find first wave where their status changes to couple dep children 
 
+all_females_in_bhps %>% 
+  filter(wave == 1, HHTYPE %in% c(3,1)) %>% 
+  pull(PID) -> init_no_child
+
+all_females_in_bhps %>% 
+  filter(PID %in% init_no_child) %>% 
+  filter(AGE < 50) %>% 
+  mutate(now_has_child = HHTYPE %in% c(4, 6)) %>% 
+  group_by(PID) %>% 
+  arrange(wave) %>% 
+  mutate(child_last = lag(now_has_child)) %>% 
+  mutate(is_mother = case_when(
+    now_has_child == 1 & child_last == 0 ~ 1,
+    now_has_child == 0 & child_last == 0 ~ 0,
+    now_has_child == 1 & child_last == 1 ~ 1,
+    now_has_child == 0 & child_last == 1 ~ 1,
+    is.na(child_last) ~ 0
+    )
+  )  %>% 
+  ungroup() %>% 
+  select(age = AGE, wave, tenure, is_mother) -> mother_df
+
+# Visualise the 'survival' curve 
+
+mother_df %>% 
+  group_by(wave) %>% 
+  summarise(mean_mother = mean(is_mother)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = 1 - mean_mother)) + 
+  geom_line() + 
+  ylim(c(0, 1)) + 
+  labs(x = "Wave", y = "Proportion not mothers")
+
+# Now by tenure (not really following the same people)
+mother_df %>% 
+  group_by(wave, tenure) %>% 
+  summarise(mean_mother = mean(is_mother)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = 1 - mean_mother)) + 
+  geom_line() + 
+  ylim(c(0, 1)) + 
+  facet_wrap(~tenure) +
+  labs(x = "Wave", y = "Proportion not mothers")
+
+# To do: Survival modelling 
+# https://www.datacamp.com/community/tutorials/survival-analysis-R
+
+require(survival)
+require(survminer)
+
+mother_df %>% 
+  mutate(simple_tenure = car::recode(
+    tenure,
+    "
+      c('Housing Assoc. rented', 'Local Authority rented') = 'Social';
+      c('Other rented', 'Rented from Employer', 'Rented Private furnished', 'Rented private unfurnished') = 'Rented';
+      c('Owned Outright', 'Owned with Mortgage') = 'Owned';
+      else = NA
+    "
+    )
+  ) -> mother_df
+
+surv_object <- Surv(time = mother_df$wave, event = mother_df$is_mother)
+
+fit1 <- survfit(surv_object ~ simple_tenure, data = mother_df)
+summary(fit1)
+
+ggsurvplot(fit1, data = mother_df, pval = TRUE)
+
+fit2 <- survfit(surv_object ~ simple_tenure + age, data = mother_df)
+
+summary(fit1)
+summary(fit2)
+
+fit1_cox <- coxph(surv_object ~ simple_tenure , data = mother_df)
+fit2_cox <- coxph(surv_object ~ simple_tenure + age , data = mother_df)
+fit3_cox <- coxph(surv_object ~ simple_tenure + age + I(age^2) , data = mother_df)
+
+# # Extract relationship table  ---------------------------------------------
+# 
+# # Data - egoalt files -----------------------------------------------------
+# 
+# 
+# dta_path <- "E:/data/bhps/unzipped/ukda-5151-tab/tab/"
+# dta_files <- list.files(path = dta_path, pattern = "egoalt\\.tab")
+# 
+# all_egoalts <- map(
+#   paste0(dta_path, dta_files),
+#   read_delim,
+#   delim = "\t"
+# ) 
+# 
+# change_to_long <- function(DTA){
+#   pid <- DTA$PID
+#   DTA$PID <- NULL
+#   nms <- names(DTA)
+#   nm1 <- nms[1]
+#   wave <- str_sub(nm1, 0, 1)
+#   wave_num <- which(LETTERS[1:26] == wave)
+#   nms <- str_replace(nms, wave, "")
+#   names(DTA) <- nms
+#   DTA %>% 
+#     mutate(wave = wave_num) %>% 
+#     mutate(PID = pid) %>% 
+#     select(PID, wave, everything())-> DTA
+#   DTA
+# }
+# 
+# all_egoalts <- map(
+#   all_egoalts,
+#   change_to_long
+# ) %>% 
+#   bind_rows() 
+# 
+# 
+# # First challenge: for each woman, how many alters by wave? 
+# 
+# all_females_in_bhps %>%  
+#   mutate(alter_df = map2(PID, wave, ~ all_egoalts %>% filter(PID == .x, wave == .y))) %>% 
+#   mutate(n_alters = map_int(alter_df, nrow)) -> females_with_alters
+# 
+# # Then work out if alter includes a natural child 
+# 
+# females_with_alters %>% 
+#   mutate(n_children = map_int(alter_df, ~ length(which(.x$REL == 4)))) -> females_with_alters 
+# 
 
 # Save this 
 
-write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
+# write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
 
-
+females_with_alters <- read_rds("data/females_with_alters.rData")
 # Now to show number of children by wave and age 
 
 females_with_alters %>% 
@@ -213,7 +436,7 @@ females_with_alters %>%
   coord_fixed()
 
 
-write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
+# write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
 
 
 # now to flag a woman as having at least one baby 
