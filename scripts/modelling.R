@@ -40,21 +40,6 @@ mother_df %>%
   ylim(c(0, 1)) + 
   labs(x = "Wave", y = "Proportion not mothers")
 
-# Now by tenure (not really following the same people)
-mother_df %>% 
-  group_by(wave, tenure) %>% 
-  summarise(mean_mother = mean(is_mother)) %>% 
-  ungroup() %>% 
-  ggplot(aes(x = wave, y = 1 - mean_mother)) + 
-  geom_line() + 
-  ylim(c(0, 1)) + 
-  facet_wrap(~tenure) +
-  labs(x = "Wave", y = "Proportion not mothers")
-
-# To do: Survival modelling 
-# https://www.datacamp.com/community/tutorials/survival-analysis-R
-
-
 
 mother_df %>% 
   mutate(simple_tenure = car::recode(
@@ -67,6 +52,20 @@ mother_df %>%
     "
   )
   ) -> mother_df
+
+# Now by tenure (not really following the same people)
+mother_df %>% 
+  filter(!is.na(simple_tenure)) %>% 
+  group_by(wave, simple_tenure) %>% 
+  summarise(mean_mother = mean(is_mother)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = 1 - mean_mother, colour = simple_tenure, linetype = simple_tenure)) + 
+  geom_line() + 
+  ylim(c(0, 1)) + 
+  labs(x = "Wave", y = "Proportion not mothers")
+
+# To do: Survival modelling 
+# https://www.datacamp.com/community/tutorials/survival-analysis-R
 
 surv_object <- Surv(time = mother_df$wave, event = mother_df$is_mother)
 
