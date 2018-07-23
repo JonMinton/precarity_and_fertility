@@ -271,38 +271,37 @@ write_rds(all_females_in_bhps, path = "data/all_females_in_bhps.rData")
 # write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
 
 females_with_alters <- read_rds("data/females_with_alters.rData")
-# Now to show number of children by wave and age 
-
-females_with_alters %>% 
-  select(wave, age = AGE, n_children) %>% 
-  group_by(wave, age) %>% 
-  summarise(mean_children = mean(n_children)) %>% 
-  ungroup() %>% 
-  ggplot(aes(x = wave, y = age, fill = mean_children)) + 
-  geom_tile() +
-  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
-  coord_fixed()
 
 
-# Now, similarly, let's work out the proportion of females living with at 
+# Let's work out the proportion of females living with at 
 # least one parent by age 
 
 females_with_alters %>% 
   mutate(n_parents = map_int(alter_df, ~ length(which(.x$REL == 13)))) %>% 
   mutate(live_with_parents = n_parents > 0) -> females_with_alters 
 
+# 
+# # Now to visualise this 
+# 
+# females_with_alters %>% 
+#   select(wave, age = AGE, live_with_parents) %>% 
+#   group_by(wave, age) %>% 
+#   summarise(mean_with_parents = mean(live_with_parents)) %>% 
+#   ungroup() %>% 
+#   ggplot(aes(x = wave, y = age, fill = mean_with_parents)) + 
+#   geom_tile() +
+#   scale_fill_gradientn(
+#     "Proportion",
+#     colours = scales::brewer_pal(palette = "Paired")(12),
+#     limits = c(0, 1)
+#   ) + 
+#   coord_fixed() + 
+#   labs(
+#     x = "BHPS wave",
+#     y = "Age in single years",
+#     title = "Women living with Parents"
+#   )
 
-# Now to visualise this 
-
-females_with_alters %>% 
-  select(wave, age = AGE, live_with_parents) %>% 
-  group_by(wave, age) %>% 
-  summarise(mean_with_parents = mean(live_with_parents)) %>% 
-  ungroup() %>% 
-  ggplot(aes(x = wave, y = age, fill = mean_with_parents)) + 
-  geom_tile() +
-  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
-  coord_fixed()
 
 # Issue with age missing? 
 
@@ -319,8 +318,17 @@ females_with_alters %>%
   ungroup() %>% 
   ggplot(aes(x = wave, y = age, fill = mean_with_parents)) + 
   geom_tile() +
-  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
-  coord_fixed()
+  scale_fill_gradientn(
+    "Proportion",
+    colours = scales::brewer_pal(palette = "Paired")(12),
+    limits = c(0, 1)
+  ) + 
+  coord_fixed() + 
+  labs(
+    x = "BHPS wave",
+    y = "Age in single years",
+    title = "Women living with Parents"
+  )
 
 
 # Now, live with partner
@@ -339,8 +347,17 @@ females_with_alters %>%
   ungroup() %>% 
   ggplot(aes(x = wave, y = age, fill = mean_with_spouse)) + 
   geom_tile() +
-  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
-  coord_fixed()
+  scale_fill_gradientn(
+    "Proportion",
+    colours = scales::brewer_pal(palette = "Paired")(12),
+    limits = c(0, 1)
+  ) + 
+  coord_fixed() + 
+  labs(
+    x = "BHPS wave",
+    y = "Age in single years",
+    title = "Women living with Spouse"
+  )
 
 
 females_with_alters %>% 
@@ -350,8 +367,17 @@ females_with_alters %>%
   ungroup() %>% 
   ggplot(aes(x = wave, y = age, fill = mean_with_partner)) + 
   geom_tile() +
-  scale_fill_gradientn(colours = c("red", "green", "blue")) + 
-  coord_fixed()
+  scale_fill_gradientn(
+    "Mean prop living with Partner",
+    colours = scales::brewer_pal(palette = "Paired")(12),
+    limits = c(0, 1)
+  ) + 
+  coord_fixed() + 
+  labs(
+    x = "BHPS wave",
+    y = "Age in single years",
+    title = "Women living with partner (not married)"
+  )
 
 
 # write_rds(x = females_with_alters, path = "data/females_with_alters.rData")
@@ -371,10 +397,41 @@ females_with_alters %>%
   summarise(prop_childless = mean(childless)) %>% 
   ungroup() %>% 
   ggplot(aes(x = wave, y = age, fill = prop_childless)) +
-  geom_tile() + coord_fixed()
+  geom_tile() + coord_fixed() + 
+  scale_fill_gradientn(
+    "Proportion",
+    colours = scales::brewer_pal(palette = "Paired")(12),
+    limits = c(0, 1)
+  ) + 
+  labs(
+    x = "BHPS wave",
+    y = "Age in single years",
+    title = "Households without children"
+  )
 
 # Other variables are needed.
 
+# Mean number of children
+
+females_with_alters %>% 
+  group_by(PID) %>% 
+  arrange(wave) %>% 
+  select(PID, wave, age = AGE, n_children) %>% 
+  group_by(wave, age) %>% 
+  summarise(mean_children = mean(n_children)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = wave, y = age, fill = mean_children)) +
+  geom_tile() + coord_fixed() + 
+  scale_fill_gradientn(
+    "Mean number\nof children",
+    colours = scales::brewer_pal(palette = "Paired")(12),
+    limits = c(0, 2)
+  ) + 
+  labs(
+    x = "BHPS wave",
+    y = "Age in single years",
+    title = "Mean number of children"
+  )
 
 
 

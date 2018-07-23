@@ -83,4 +83,4 @@ fit1_cox <- coxph(surv_object ~ simple_tenure , data = mother_df)
 fit2_cox <- coxph(surv_object ~ simple_tenure + age , data = mother_df)
 fit3_cox <- coxph(surv_object ~ simple_tenure + age + I(age^2) , data = mother_df)
 
-#ggforest(fit3_cox, data = mother_df)
+ggforest(fit3_cox, data = mother_df)
